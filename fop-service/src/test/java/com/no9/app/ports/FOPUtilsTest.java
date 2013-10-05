@@ -1,7 +1,7 @@
 package com.no9.app.ports;
 
+import com.no9.app.adaptors.Resource;
 import com.no9.app.services.TemplateID;
-import com.no9.app.ui.Resource;
 import org.junit.Before;
 import org.junit.Test;
 

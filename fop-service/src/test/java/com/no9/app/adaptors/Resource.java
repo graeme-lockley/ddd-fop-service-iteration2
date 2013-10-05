@@ -1,9 +1,9 @@
-package com.no9.app.ui;
+package com.no9.app.adaptors;
+
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.IOException;
 
 public class Resource {
     private final String resourceName;
@@ -21,7 +21,12 @@ public class Resource {
         return getClass().getClassLoader().getResource(resourceName).getFile();
     }
 
-    public InputStream toInputStream() throws FileNotFoundException {
-        return new FileInputStream(toFile());
+    @Override
+    public String toString() {
+        try {
+            return FileUtils.readFileToString(toFile());
+        } catch (IOException ex) {
+            return ex.toString();
+        }
     }
 }
