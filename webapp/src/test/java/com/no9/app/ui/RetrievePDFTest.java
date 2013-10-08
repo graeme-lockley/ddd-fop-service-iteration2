@@ -1,16 +1,16 @@
 package com.no9.app.ui;
 
-import com.no9.app.ports.FOPUtils;
+import com.no9.app.services.RenderException;
+import com.no9.app.services.RenderService;
 import com.no9.app.services.TemplateID;
-import mockit.Mock;
-import mockit.MockUp;
 import org.junit.Before;
 import org.junit.Test;
 import org.mortbay.jetty.testing.HttpTester;
 import org.mortbay.jetty.testing.ServletTester;
 
-import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +36,17 @@ public class RetrievePDFTest {
 
     @Test
     public void should_get_same_PDF_result_over_multiple_calls() throws Exception {
+        new TestServiceRegistry(new RenderService() {
+            @Override
+            public void toPDF(TemplateID templateID, InputStream source, OutputStream output) throws RenderException {
+                try {
+                    output.write("%PDF-1.4 - and some other text...".getBytes());
+                } catch (IOException ex) {
+                    throw new RenderException(ex);
+                }
+            }
+        });
+
         HttpTester firstResponse = getPDFResponse();
         HttpTester secondResponse = getPDFResponse();
 
@@ -44,17 +55,17 @@ public class RetrievePDFTest {
 
     @Test
     public void should_return_an_error_page() throws Exception {
-        new MockUp<FOPUtils>() {
-            @Mock
-            public Templates getXSLTemplate(TemplateID xsltTemplateID) throws TransformerException {
-                throw new TransformerException("Mock Exception");
+        new TestServiceRegistry(new RenderService() {
+            @Override
+            public void toPDF(TemplateID templateID, InputStream source, OutputStream output) throws RenderException {
+                throw new RenderException(new Exception("My Exception"));
             }
-        };
+        });
 
         HttpTester response = getResponse();
         assertEquals(200, response.getStatus());
         assertEquals("text/html", response.getContentType());
-        assertTrue(response.getContent().contains("Mock Exception"));
+        assertTrue(response.getContent().contains("My Exception"));
     }
 
     private HttpTester getPDFResponse() throws Exception {
@@ -74,3 +85,4 @@ public class RetrievePDFTest {
         return response;
     }
 }
+
